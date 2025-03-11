@@ -415,7 +415,7 @@ function AdminComplaintCard({
         <CardDescription>Submitted on {new Date(complaint.createdAt).toLocaleDateString()}</CardDescription>
       </CardHeader>
       <CardContent>
-        <img src="/image.jpg"></img>
+        {/* <img src="/image.jpg"></img> */}
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div>
             <p className="text-sm text-gray-500">Status</p>

@@ -32,7 +32,7 @@ export default function Home() {
             <div className="mx-auto lg:mx-0 relative aspect-video overflow-hidden rounded-xl">
               <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                 <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-CjkF4cxOT6gmWtPzAokPl4B2VeAB1h.png"
+                  src="/image.jpg"
                   alt="Indian Railways Train"
                   fill
                   className="object-cover"
