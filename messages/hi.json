@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "home": "होम",
+    "submit": "शिकायत दर्ज करें",
+    "track": "शिकायत ट्रैक करें",
+    "dashboard": "डैशबोर्ड",
+    "admin": "एडमिन"
+  },
+  "auth": {
+    "login": "लॉग इन",
+    "logout": "लॉग आउट",
+    "phone": "फोन नंबर",
+    "enterPhone": "अपना फोन नंबर दर्ज करें",
+    "verificationCode": "वेरिफिकेशन कोड",
+    "enterCode": "6-अंकों का कोड दर्ज करें",
+    "sendCode": "वेरिफिकेशन कोड भेजें",
+    "verify": "कोड वेरिफाई करें",
+    "changePhone": "फोन नंबर बदलें"
+  },
+  "dashboard": {
+    "welcome": "वापसी पर स्वागत है",
+    "stats": {
+      "totalComplaints": "कुल शिकायतें",
+      "resolutionRate": "समाधान दर",
+      "avgResolutionTime": "औसत समाधान समय",
+      "aiAccuracy": "एआई सटीकता"
+    },
+    "tabs": {
+      "overview": "ओवरव्यू",
+      "complaints": "मेरी शिकायतें",
+      "analytics": "एनालिटिक्स"
+    }
+  },
+  "complaint": {
+    "status": {
+      "pending": "लंबित",
+      "processing": "प्रोसेसिंग",
+      "inProgress": "प्रगति में",
+      "resolved": "समाधान"
+    },
+    "priority": {
+      "low": "कम",
+      "medium": "मध्यम",
+      "high": "उच्च"
+    }
+  }
+}
+

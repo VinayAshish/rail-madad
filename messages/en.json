@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "home": "Home",
+    "submit": "Submit Complaint",
+    "track": "Track Complaint",
+    "dashboard": "Dashboard",
+    "admin": "Admin"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Log out",
+    "phone": "Phone Number",
+    "enterPhone": "Enter your phone number",
+    "verificationCode": "Verification Code",
+    "enterCode": "Enter 6-digit code",
+    "sendCode": "Send Verification Code",
+    "verify": "Verify Code",
+    "changePhone": "Change Phone Number"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "stats": {
+      "totalComplaints": "Total Complaints",
+      "resolutionRate": "Resolution Rate",
+      "avgResolutionTime": "Avg. Resolution Time",
+      "aiAccuracy": "AI Accuracy"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "complaints": "My Complaints",
+      "analytics": "Analytics"
+    }
+  },
+  "complaint": {
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "inProgress": "In Progress",
+      "resolved": "Resolved"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
+  }
+}
+
