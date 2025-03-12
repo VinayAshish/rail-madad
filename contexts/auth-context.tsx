@@ -33,18 +33,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const { toast } = useToast()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+
     // Check for user in localStorage
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
-      try {
+    try {
+      const storedUser = localStorage.getItem("user")
+      if (storedUser) {
         setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error("Failed to parse stored user:", error)
-        localStorage.removeItem("user")
       }
+    } catch (error) {
+      console.error("Failed to parse stored user:", error)
+      localStorage.removeItem("user")
     }
+
     setIsLoading(false)
   }, [])
 
@@ -69,7 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setUser(updatedUserData)
-    localStorage.setItem("user", JSON.stringify(updatedUserData))
+
+    if (mounted) {
+      localStorage.setItem("user", JSON.stringify(updatedUserData))
+    }
 
     // Show welcome toast with role information
     toast({
@@ -89,7 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem("user")
+
+    if (mounted) {
+      localStorage.removeItem("user")
+    }
+
     router.push("/")
 
     toast({

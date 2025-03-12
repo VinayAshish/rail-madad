@@ -2,12 +2,12 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
-import { Loader2, Upload, X, Camera } from "lucide-react"
+import { Loader2, Upload, X, Camera, Mic, MicOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { analyzeComplaintText } from "@/lib/ai-analysis"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from "next/image"
+import { motion } from "framer-motion"
 
 const formSchema = z.object({
   pnrNumber: z.string().min(10, {
@@ -69,9 +70,12 @@ export default function SubmitComplaintPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analyzeResults, setAnalyzeResults] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<string>("form")
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingText, setRecordingText] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const router = useRouter()
+  const recognitionRef = useRef<any>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,6 +90,88 @@ export default function SubmitComplaintPage() {
       journeyStage: "during",
     },
   })
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // @ts-ignore
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition()
+        recognitionRef.current.continuous = true
+        recognitionRef.current.interimResults = true
+        recognitionRef.current.lang = "en-US"
+
+        recognitionRef.current.onresult = (event: any) => {
+          let interimTranscript = ""
+          let finalTranscript = ""
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript
+            } else {
+              interimTranscript += transcript
+            }
+          }
+
+          setRecordingText(finalTranscript || interimTranscript)
+        }
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("Speech recognition error", event.error)
+          setIsRecording(false)
+          toast({
+            title: "Voice Recognition Error",
+            description: `Error: ${event.error}. Please try again or type manually.`,
+            variant: "destructive",
+          })
+        }
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+      }
+    }
+  }, [toast])
+
+  // Update form with recording text
+  useEffect(() => {
+    if (recordingText) {
+      form.setValue("description", recordingText)
+    }
+  }, [recordingText, form])
+
+  const toggleRecording = () => {
+    if (!recognitionRef.current) {
+      toast({
+        title: "Voice Recognition Not Supported",
+        description: "Your browser doesn't support voice recognition. Please use a modern browser like Chrome.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop()
+      setIsRecording(false)
+      toast({
+        title: "Voice Recording Stopped",
+        description: "Your voice has been converted to text.",
+      })
+    } else {
+      // Reset recording text when starting a new recording
+      setRecordingText("")
+      recognitionRef.current.start()
+      setIsRecording(true)
+      toast({
+        title: "Voice Recording Started",
+        description: "Speak clearly into your microphone. Click the button again to stop recording.",
+      })
+    }
+  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -156,7 +242,13 @@ export default function SubmitComplaintPage() {
       // Simulate OCR results
       const mockOcrResults = {
         success: true,
-        text: "Indian Railways\nPNR: 1234567890\nTrain No: 12345\nCoach: S4\nSeat: 42\nFrom: Delhi\nTo: Mumbai",
+        text: `Indian Railways
+PNR: 1234567890
+Train No: 12345
+Coach: S4
+Seat: 42
+From: Delhi
+To: Mumbai`,
         extractedInfo: {
           pnr: "1234567890",
           trainNumber: "12345",
@@ -280,6 +372,14 @@ export default function SubmitComplaintPage() {
       // Save back to localStorage
       localStorage.setItem("complaints", JSON.stringify(complaints))
 
+      // Simulate sending SMS and email notifications
+      console.log(
+        `SMS notification would be sent to user: Your complaint has been submitted successfully. Your complaint ID is ${complaintId}.`,
+      )
+      console.log(
+        `Email notification would be sent to ${values.contactEmail} with complaint details and ID ${complaintId}`,
+      )
+
       // Success message
       toast({
         title: "Complaint Submitted",
@@ -301,7 +401,12 @@ export default function SubmitComplaintPage() {
   }
 
   return (
-    <div className="container py-10">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="container py-10"
+    >
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">Submit a Complaint</CardTitle>
@@ -471,22 +576,43 @@ export default function SubmitComplaintPage() {
                       <FormItem>
                         <div className="flex items-center justify-between">
                           <FormLabel>Complaint Description</FormLabel>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => analyzeDescription(field.value)}
-                            disabled={isAnalyzing || !field.value || field.value.length < 10}
-                          >
-                            {isAnalyzing ? (
-                              <>
-                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                Analyzing...
-                              </>
-                            ) : (
-                              "Analyze with AI"
-                            )}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={toggleRecording}
+                              className={isRecording ? "bg-red-100" : ""}
+                            >
+                              {isRecording ? (
+                                <>
+                                  <MicOff className="mr-2 h-3 w-3" />
+                                  Stop Recording
+                                </>
+                              ) : (
+                                <>
+                                  <Mic className="mr-2 h-3 w-3" />
+                                  Voice Input
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => analyzeDescription(field.value)}
+                              disabled={isAnalyzing || !field.value || field.value.length < 10}
+                            >
+                              {isAnalyzing ? (
+                                <>
+                                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                  Analyzing...
+                                </>
+                              ) : (
+                                "Analyze with AI"
+                              )}
+                            </Button>
+                          </div>
                         </div>
                         <FormControl>
                           <Textarea
@@ -495,6 +621,11 @@ export default function SubmitComplaintPage() {
                             {...field}
                           />
                         </FormControl>
+                        {isRecording && (
+                          <div className="text-sm text-blue-600 animate-pulse">
+                            Recording... Speak clearly into your microphone.
+                          </div>
+                        )}
                         <FormDescription>Provide as much detail as possible about your complaint.</FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -584,7 +715,7 @@ export default function SubmitComplaintPage() {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   )
 }
 

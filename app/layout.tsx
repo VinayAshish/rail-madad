@@ -5,10 +5,17 @@ import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { RailMadadChatbot } from "@/components/chatbot/rail-madad-chatbot"
-import { Header } from "@/components/layout/header"
+import dynamic from "next/dynamic"
 
 const inter = Inter({ subsets: ["latin"] })
+
+// Dynamically import the Header and RailMadadChatbot components with ssr: false
+// This prevents hydration errors by ensuring they only render on the client
+const Header = dynamic(() => import("@/components/layout/header").then((mod) => mod.Header), { ssr: false })
+const RailMadadChatbot = dynamic(
+  () => import("@/components/chatbot/rail-madad-chatbot").then((mod) => mod.RailMadadChatbot),
+  { ssr: false },
+)
 
 export const metadata: Metadata = {
   title: "Rail Madad - AI-Enhanced Complaint Management System",

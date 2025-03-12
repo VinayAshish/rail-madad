@@ -40,11 +40,13 @@ export function RailMadadChatbot({ onComplaintSubmit, onTrackRequest }: ChatbotP
     step: 0,
   })
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
+  // Scroll to bottom whenever messages change
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [messages])
 
@@ -259,20 +261,19 @@ export function RailMadadChatbot({ onComplaintSubmit, onTrackRequest }: ChatbotP
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Get complaints from localStorage
+      const complaints = JSON.parse(localStorage.getItem("complaints") || "[]")
 
-      // Mock data
-      const data = {
-        id: complaintId,
-        status: "IN_PROGRESS",
-        category: "Cleanliness",
-        createdAt: new Date().toISOString(),
+      // Find the complaint with the given ID
+      const complaint = complaints.find((c: any) => c.id === complaintId)
+
+      if (!complaint) {
+        throw new Error("Complaint not found")
       }
 
       // Format the complaint data for display
-      const status = data.status.replace(/_/g, " ")
-      const date = new Date(data.createdAt).toLocaleString()
+      const status = complaint.status.replace(/_/g, " ")
+      const date = new Date(complaint.createdAt).toLocaleString()
 
       setMessages((prev) => [
         ...prev,
@@ -282,7 +283,10 @@ export function RailMadadChatbot({ onComplaintSubmit, onTrackRequest }: ChatbotP
 
 Status: ${status}
 Submitted on: ${date}
-Category: ${data.category}
+Category: ${complaint.category}
+Train: ${complaint.trainNumber}
+Coach: ${complaint.coachNumber}
+Seat: ${complaint.seatNumber}
 
 Would you like to see more details?`,
         },
@@ -317,7 +321,7 @@ Would you like to see more details?`,
   return (
     <Card
       className={cn(
-        "fixed right-4 bottom-4 w-80 shadow-lg transition-all duration-200",
+        "fixed right-4 bottom-4 w-80 md:w-96 shadow-lg transition-all duration-200 z-50",
         isMinimized ? "h-14" : "h-[500px]",
       )}
     >
@@ -337,13 +341,13 @@ Would you like to see more details?`,
       </CardHeader>
       {!isMinimized && (
         <>
-          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+          <ScrollArea className="flex-1 p-4 h-[calc(500px-110px)]">
             <div className="space-y-4">
               {messages.map((message, index) => (
                 <div
                   key={index}
                   className={cn(
-                    "flex w-max max-w-[80%] rounded-lg px-3 py-2 text-sm",
+                    "flex w-max max-w-[90%] rounded-lg px-3 py-2 text-sm",
                     message.role === "assistant" ? "bg-muted" : "bg-primary text-primary-foreground ml-auto",
                   )}
                 >
@@ -355,6 +359,7 @@ Would you like to see more details?`,
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
           <CardContent className="p-3 border-t">
@@ -381,4 +386,6 @@ Would you like to see more details?`,
     </Card>
   )
 }
+
+export default RailMadadChatbot
 

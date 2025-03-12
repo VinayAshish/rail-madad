@@ -66,6 +66,18 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  isOnline: {
+    type: Boolean,
+    default: false,
+  },
+  currentTrain: {
+    type: String,
+    required: false,
+  },
+  lastActive: {
+    type: Date,
+    default: Date.now,
+  },
   loginHistory: [
     {
       timestamp: Date,

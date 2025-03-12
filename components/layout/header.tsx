@@ -13,12 +13,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { User } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export function Header() {
   const { user, logout } = useAuth()
   const pathname = usePathname()
   const [imageError, setImageError] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // This ensures the component only renders fully on the client
+  // to prevent hydration errors
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Don't render anything until mounted on the client
+  if (!mounted) {
+    return <div className="h-16 border-b bg-white dark:bg-gray-900 shadow-sm"></div>
+  }
 
   const isActive = (path: string) => pathname === path
 
@@ -156,4 +168,6 @@ export function Header() {
     </header>
   )
 }
+
+export default Header
 

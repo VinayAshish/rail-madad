@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
-import { Loader2, CheckCircle, X, UserCheck, Train } from "lucide-react"
+import { Loader2, CheckCircle, X, UserCheck, Train, Search } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { getStatusColor, getPriorityColor } from "@/lib/utils"
 import {
@@ -21,13 +21,16 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { motion } from "framer-motion"
 
-// Mock workers data
-const WORKERS = [
-  { id: "W001", name: "John Smith", email: "john@staffrmc.com", department: "Cleanliness", available: true },
-  { id: "W002", name: "Jane Doe", email: "jane@staffrmc.com", department: "Food Services", available: true },
-  { id: "W003", name: "Bob Johnson", email: "bob@staffrmc.com", department: "Technical", available: true },
-  { id: "W004", name: "Alice Brown", email: "alice@staffrmc.com", department: "Customer Service", available: true },
+// Mock trains data
+const TRAINS = [
+  { number: "12301", name: "Howrah Rajdhani" },
+  { number: "12302", name: "Delhi Rajdhani" },
+  { number: "12309", name: "Rajendra Nagar Patna Rajdhani" },
+  { number: "12951", name: "Mumbai Rajdhani" },
+  { number: "12303", name: "Poorva Express" },
 ]
 
 export default function AdminPage() {
@@ -43,7 +46,8 @@ export default function AdminPage() {
     rejected: 0,
   })
   const { toast } = useToast()
-  const [workers] = useState(WORKERS)
+  const [workers, setWorkers] = useState<any[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
 
   // Redirect if not admin
   useEffect(() => {
@@ -60,6 +64,10 @@ export default function AdminPage() {
       // Get complaints from localStorage
       const storedComplaints = JSON.parse(localStorage.getItem("complaints") || "[]")
       setComplaints(storedComplaints)
+
+      // Get workers from localStorage
+      const storedWorkers = JSON.parse(localStorage.getItem("workers") || "[]")
+      setWorkers(storedWorkers)
 
       // Calculate stats
       const total = storedComplaints.length
@@ -116,6 +124,15 @@ export default function AdminPage() {
       inProgress: stats.inProgress + 1,
     })
 
+    // Send notification to user (simulated)
+    const complaint = complaints.find((c) => c.id === id)
+    if (complaint) {
+      console.log(
+        `SMS notification would be sent to user for complaint ${id}: Your complaint has been approved and is now in progress.`,
+      )
+      console.log(`Email notification would be sent to ${complaint.contactEmail} for complaint ${id}`)
+    }
+
     toast({
       title: "Complaint Approved",
       description: `Complaint ${id} has been approved and is now in progress.`,
@@ -142,6 +159,13 @@ export default function AdminPage() {
       inProgress: stats.inProgress - 1,
       resolved: stats.resolved + 1,
     })
+
+    // Send notification to user (simulated)
+    const complaint = complaints.find((c) => c.id === id)
+    if (complaint) {
+      console.log(`SMS notification would be sent to user for complaint ${id}: Your complaint has been resolved.`)
+      console.log(`Email notification would be sent to ${complaint.contactEmail} for complaint ${id}`)
+    }
 
     toast({
       title: "Complaint Resolved",
@@ -170,6 +194,13 @@ export default function AdminPage() {
       rejected: stats.rejected + 1,
     })
 
+    // Send notification to user (simulated)
+    const complaint = complaints.find((c) => c.id === id)
+    if (complaint) {
+      console.log(`SMS notification would be sent to user for complaint ${id}: Your complaint has been rejected.`)
+      console.log(`Email notification would be sent to ${complaint.contactEmail} for complaint ${id}`)
+    }
+
     toast({
       title: "Complaint Rejected",
       description: `Complaint ${id} has been rejected.`,
@@ -193,14 +224,42 @@ export default function AdminPage() {
 
     const worker = workers.find((w) => w.id === workerId)
 
+    // Send notification to worker (simulated)
+    if (worker) {
+      console.log(`SMS notification would be sent to worker ${worker.name}: A new complaint has been assigned to you.`)
+      console.log(`Email notification would be sent to ${worker.email} for complaint ${complaintId}`)
+    }
+
     toast({
       title: "Worker Assigned",
       description: `Complaint ${complaintId} has been assigned to ${worker?.name}.`,
     })
   }
 
+  const getAvailableWorkers = (trainNumber: string) => {
+    // Filter workers who are online and either not assigned to a train or assigned to the same train
+    return workers.filter(
+      (worker) => worker.isOnline && (worker.currentTrain === "" || worker.currentTrain === trainNumber),
+    )
+  }
+
+  const filteredComplaints = searchTerm
+    ? complaints.filter(
+        (c) =>
+          c.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : complaints
+
   return (
-    <div className="container py-10">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="container py-10"
+    >
       <div className="flex flex-wrap justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <div className="flex gap-2">
@@ -256,6 +315,18 @@ export default function AdminPage() {
         </Card>
       </div>
 
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <Input
+            placeholder="Search complaints by ID, description, category, or train number..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="all">All Complaints</TabsTrigger>
@@ -266,17 +337,25 @@ export default function AdminPage() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          {complaints.length > 0 ? (
-            complaints.map((complaint) => (
-              <AdminComplaintCard
+          {filteredComplaints.length > 0 ? (
+            filteredComplaints.map((complaint) => (
+              <motion.div
                 key={complaint.id}
-                complaint={complaint}
-                onApprove={handleApprove}
-                onResolve={handleResolve}
-                onReject={handleReject}
-                onAssignWorker={handleAssignWorker}
-                workers={workers}
-              />
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AdminComplaintCard
+                  complaint={complaint}
+                  onApprove={handleApprove}
+                  onResolve={handleResolve}
+                  onReject={handleReject}
+                  onAssignWorker={handleAssignWorker}
+                  workers={workers}
+                  trains={TRAINS}
+                  getAvailableWorkers={getAvailableWorkers}
+                />
+              </motion.div>
             ))
           ) : (
             <Card>
@@ -288,19 +367,27 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-4">
-          {complaints.filter((c) => c.status === "PENDING").length > 0 ? (
-            complaints
+          {filteredComplaints.filter((c) => c.status === "PENDING").length > 0 ? (
+            filteredComplaints
               .filter((c) => c.status === "PENDING")
               .map((complaint) => (
-                <AdminComplaintCard
+                <motion.div
                   key={complaint.id}
-                  complaint={complaint}
-                  onApprove={handleApprove}
-                  onResolve={handleResolve}
-                  onReject={handleReject}
-                  onAssignWorker={handleAssignWorker}
-                  workers={workers}
-                />
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AdminComplaintCard
+                    complaint={complaint}
+                    onApprove={handleApprove}
+                    onResolve={handleResolve}
+                    onReject={handleReject}
+                    onAssignWorker={handleAssignWorker}
+                    workers={workers}
+                    trains={TRAINS}
+                    getAvailableWorkers={getAvailableWorkers}
+                  />
+                </motion.div>
               ))
           ) : (
             <Card>
@@ -312,19 +399,27 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="in-progress" className="space-y-4">
-          {complaints.filter((c) => c.status === "IN_PROGRESS").length > 0 ? (
-            complaints
+          {filteredComplaints.filter((c) => c.status === "IN_PROGRESS").length > 0 ? (
+            filteredComplaints
               .filter((c) => c.status === "IN_PROGRESS")
               .map((complaint) => (
-                <AdminComplaintCard
+                <motion.div
                   key={complaint.id}
-                  complaint={complaint}
-                  onApprove={handleApprove}
-                  onResolve={handleResolve}
-                  onReject={handleReject}
-                  onAssignWorker={handleAssignWorker}
-                  workers={workers}
-                />
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AdminComplaintCard
+                    complaint={complaint}
+                    onApprove={handleApprove}
+                    onResolve={handleResolve}
+                    onReject={handleReject}
+                    onAssignWorker={handleAssignWorker}
+                    workers={workers}
+                    trains={TRAINS}
+                    getAvailableWorkers={getAvailableWorkers}
+                  />
+                </motion.div>
               ))
           ) : (
             <Card>
@@ -336,19 +431,27 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="resolved" className="space-y-4">
-          {complaints.filter((c) => c.status === "RESOLVED").length > 0 ? (
-            complaints
+          {filteredComplaints.filter((c) => c.status === "RESOLVED").length > 0 ? (
+            filteredComplaints
               .filter((c) => c.status === "RESOLVED")
               .map((complaint) => (
-                <AdminComplaintCard
+                <motion.div
                   key={complaint.id}
-                  complaint={complaint}
-                  onApprove={handleApprove}
-                  onResolve={handleResolve}
-                  onReject={handleReject}
-                  onAssignWorker={handleAssignWorker}
-                  workers={workers}
-                />
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AdminComplaintCard
+                    complaint={complaint}
+                    onApprove={handleApprove}
+                    onResolve={handleResolve}
+                    onReject={handleReject}
+                    onAssignWorker={handleAssignWorker}
+                    workers={workers}
+                    trains={TRAINS}
+                    getAvailableWorkers={getAvailableWorkers}
+                  />
+                </motion.div>
               ))
           ) : (
             <Card>
@@ -360,19 +463,27 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="rejected" className="space-y-4">
-          {complaints.filter((c) => c.status === "REJECTED").length > 0 ? (
-            complaints
+          {filteredComplaints.filter((c) => c.status === "REJECTED").length > 0 ? (
+            filteredComplaints
               .filter((c) => c.status === "REJECTED")
               .map((complaint) => (
-                <AdminComplaintCard
+                <motion.div
                   key={complaint.id}
-                  complaint={complaint}
-                  onApprove={handleApprove}
-                  onResolve={handleResolve}
-                  onReject={handleReject}
-                  onAssignWorker={handleAssignWorker}
-                  workers={workers}
-                />
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AdminComplaintCard
+                    complaint={complaint}
+                    onApprove={handleApprove}
+                    onResolve={handleResolve}
+                    onReject={handleReject}
+                    onAssignWorker={handleAssignWorker}
+                    workers={workers}
+                    trains={TRAINS}
+                    getAvailableWorkers={getAvailableWorkers}
+                  />
+                </motion.div>
               ))
           ) : (
             <Card>
@@ -383,7 +494,7 @@ export default function AdminPage() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   )
 }
 
@@ -394,6 +505,8 @@ function AdminComplaintCard({
   onReject,
   onAssignWorker,
   workers,
+  trains,
+  getAvailableWorkers,
 }: {
   complaint: any
   onApprove: (id: string) => void
@@ -401,12 +514,24 @@ function AdminComplaintCard({
   onReject: (id: string) => void
   onAssignWorker: (complaintId: string, workerId: string) => void
   workers: any[]
+  trains: any[]
+  getAvailableWorkers: (trainNumber: string) => any[]
 }) {
   const [selectedWorker, setSelectedWorker] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedTrain, setSelectedTrain] = useState(complaint.trainNumber || "")
+  const [availableWorkers, setAvailableWorkers] = useState<any[]>([])
+
+  useEffect(() => {
+    if (selectedTrain) {
+      setAvailableWorkers(getAvailableWorkers(selectedTrain))
+    } else {
+      setAvailableWorkers([])
+    }
+  }, [selectedTrain, getAvailableWorkers])
 
   return (
-    <Card>
+    <Card className="hover:shadow-md transition-shadow duration-200">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg">Complaint {complaint.id}</CardTitle>
@@ -415,7 +540,6 @@ function AdminComplaintCard({
         <CardDescription>Submitted on {new Date(complaint.createdAt).toLocaleDateString()}</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* <img src="/image.jpg"></img> */}
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div>
             <p className="text-sm text-gray-500">Status</p>
@@ -443,7 +567,11 @@ function AdminComplaintCard({
           </div>
           <div>
             <p className="text-sm text-gray-500">Assigned To</p>
-            <p className="font-medium">{complaint.assignedTo || "Not assigned"}</p>
+            <p className="font-medium">
+              {complaint.assignedTo
+                ? workers.find((w) => w.id === complaint.assignedTo)?.name || complaint.assignedTo
+                : "Not assigned"}
+            </p>
           </div>
         </div>
 
@@ -506,20 +634,51 @@ function AdminComplaintCard({
                     <DialogTitle>Assign Worker</DialogTitle>
                     <DialogDescription>Select a worker to assign to this complaint.</DialogDescription>
                   </DialogHeader>
-                  <div className="py-4">
-                    <Label htmlFor="worker">Select Worker</Label>
-                    <Select value={selectedWorker} onValueChange={setSelectedWorker}>
-                      <SelectTrigger id="worker">
-                        <SelectValue placeholder="Select a worker" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {workers.map((worker) => (
-                          <SelectItem key={worker.id} value={worker.id}>
-                            {worker.name} - {worker.department}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="train">Train Number</Label>
+                      <Select value={selectedTrain} onValueChange={setSelectedTrain}>
+                        <SelectTrigger id="train">
+                          <SelectValue placeholder="Select a train" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {trains.map((train) => (
+                            <SelectItem key={train.number} value={train.number}>
+                              {train.number} - {train.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="worker">Select Worker</Label>
+                      <Select value={selectedWorker} onValueChange={setSelectedWorker} disabled={!selectedTrain}>
+                        <SelectTrigger id="worker">
+                          <SelectValue placeholder={selectedTrain ? "Select a worker" : "Select a train first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableWorkers.length > 0 ? (
+                            availableWorkers.map((worker) => (
+                              <SelectItem key={worker.id} value={worker.id}>
+                                {worker.name} {worker.isOnline ? "(Online)" : "(Offline)"}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              No available workers for this train
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedTrain && availableWorkers.length === 0 && (
+                      <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                        No workers are currently available for train {selectedTrain}. Try selecting a different train or
+                        check back later.
+                      </div>
+                    )}
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setDialogOpen(false)}>

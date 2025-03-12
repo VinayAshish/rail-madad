@@ -34,7 +34,8 @@ export default function Home() {
                 <Image
                   src="/image.jpg"
                   alt="Indian Railways Train"
-                  fill
+                  width={800}
+                  height={450}
                   className="object-cover"
                   priority
                 />
@@ -111,7 +112,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 max-w-3xl mx-auto mb-8">
+          <div className="bg-black rounded-lg shadow-md p-6 max-w-3xl mx-auto mb-8">
             <h3 className="text-xl font-semibold mb-4">Tips for Faster Resolution</h3>
             <ul className="space-y-2 text-left">
               <li className="flex items-start">
